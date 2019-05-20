@@ -51,24 +51,34 @@ for i,data in enumerate(games_played):
     
 games_played_df = games_played_df[['SEASON_ID','Player_ID','Game_ID','GAME_DATE','MATCHUP']]
 games_played_df['GAME_DATE'] = pd.to_datetime(games_played_df['GAME_DATE'], format='%b %d, %Y').dt.strftime('%m/%d/%Y')
-games_played_df['opponent_id'] = ''
 
 
 #Use Player Game Data to get opponent_id (required for shot chart endpoint)
 endpoint = 'scoreboard/?'
 full_url = base_url + endpoint
+
+scoreboard_df = pd.DataFrame()
 for i,row in games_played_df.iterrows():
+    #print(f'processing game date {game_date}')
     game_date = games_played_df.loc[i,'GAME_DATE']
-    game_id = games_played_df.loc[i,'Game_ID']
-    chart_params ={'GameDate':game_date,
+    try:
+        time.sleep(2)
+        chart_params ={'GameDate':game_date,
                   'LeagueID':'00',
                   'DayOffset':'0'}
-    response = requests.get(full_url,headers=user_agent,params=chart_params,timeout=5)
-    data = response.json()
-    
-    if data['resultSets'][0]['rowSet'][0][2]== game_id:
-        games_played_df.loc[i,'opponent_id'] = data['resultSets'][0]['rowSet'][0][7]
-
+        response = requests.get(full_url,headers=user_agent,params=chart_params,timeout=5)
+        data = response.json()
+        scoreboard_data = response.json()
+        scoreboard_headers = scoreboard_data['resultSets'][0]['headers']
+        scoreboard_data = scoreboard_data['resultSets'][0]['rowSet']
+        scoreboard_data_df = pd.DataFrame(scoreboard_data,columns=scoreboard_headers)
+        scoreboard_df = scoreboard_df.append(scoreboard_data_df)
+    except Exception as e:
+        print(response.url)
+        print(e)
+        
+player_games_df = games_played_df.merge(scoreboard_df[['GAME_ID','VISITOR_TEAM_ID']],how='left',
+                                        left_on='Game_ID',right_on='GAME_ID')
 
 #now get shot detail for each game
 base_url = 'https://stats.nba.com/stats/'
@@ -89,7 +99,7 @@ count=1
 
 for i,row in games_played_df.iterrows():
     game = games_played_df.loc[i,'Game_ID']
-    opponent = games_played_df.loc[i,'opponent_id']
+    opponent = games_played_df.loc[i,'VISITOR_TEAM_ID']
     time.sleep(2)
     chart_params = {'Period':'0',
              'VsConference':'',
@@ -176,7 +186,9 @@ for i,row in games_played_df.iterrows():
 
 
 #turn df into a dictionary for processing into mongo
-all_shot_dict = all_shot_df.to_dict('list')
+final_shot_df = all_shot_df.drop_duplicates()
+all_shot_dict = final_shot_df.to_dict('list')
 
 #  Insert climae anamolies into mongo database
+collection.drop()
 collection.insert_one(all_shot_dict)

@@ -112,26 +112,24 @@ d3.json(pythonUrl).then(function(data) {
     
       //'myScatter' is the html id
       Plotly.newPlot('myScatter', plot_data, layout);
+
     
-      var made_shots = x_make_data.length
-      var missed_shots = x_miss_data.length
+     var made_shots = x_make_data.length
+     var missed_shots = x_miss_data.length
      
-      var shot_data = {'made':made_shots,
+     var shot_data = {'made':made_shots,
                       'miss':missed_shots};
 
-      console.log('shot_data',shot_data)
       var selection = d3.select(".shots")
                         .selectAll("div")
-                        .data([shot_data])
+                        .data(shot_data)
                         .text(function(d){
-                                return 'shots made' + d['made'] + ' shots missed ' + d['miss'] + 
-                                ' [ % ' + d['made']/(d['miss']+d['made']) * 100 + ' ]' ;
+                                return 'shots made' + d['made'] + ' shots missed ' + d['miss'] + ' y loc ' + d['LOC_Y'];
                             });
       selection.enter()
             .append("div")
             .text(function(d){
-                    return 'shots made' + d['made'] + ' shots missed ' + d['miss'] + 
-                    ' [ % '+ d['made']/(d['miss']+d['made']) * 100 + ' ]' ;
+                    return 'game ' + d['game_id'] + ' x loc ' + d['LOC_X'] + ' y loc ' + d['LOC_Y'];
                 });         
     
       selection.exit().remove();
