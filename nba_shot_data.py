@@ -169,22 +169,6 @@ for i,row in games_played_df.iterrows():
     except:
         pass
         
-
-# #seperate made and misses into seperate dfs for charting
-# made_df = all_shot_df.loc[all_shot_df['SHOT_MADE_FLAG']==1]
-# made_df['LOC_X'] = pd.to_numeric(made_df['LOC_X'])
-# made_df['LOC_Y'] = pd.to_numeric(made_df['LOC_Y'])
-
-# miss_df = all_shot_df.loc[all_shot_df['SHOT_MADE_FLAG']==0]
-# miss_df['LOC_X'] = pd.to_numeric(miss_df['LOC_X'])
-# miss_df['LOC_Y'] = pd.to_numeric(miss_df['LOC_Y'])
-
-# made_chart_x = list(made_df['LOC_X'])
-# made_chart_y = list(made_df['LOC_Y'])
-# miss_chart_x = list(miss_df['LOC_X'])
-# miss_chart_y = list(miss_df['LOC_Y'])
-
-
 #turn df into a dictionary for processing into mongo
 final_shot_df = all_shot_df.drop_duplicates()
 all_shot_dict = final_shot_df.to_dict('list')

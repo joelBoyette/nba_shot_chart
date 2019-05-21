@@ -12,24 +12,33 @@ d3.json(pythonUrl).then(function(data) {
 
     //create dictionary from json data
     for (var i = 0; i < pythonData['GAME_ID'].length; i++){   
-        game_shot_dict = {game_id: pythonData['GAME_ID'][i],
-                                Shot_Made_Flag: pythonData['SHOT_MADE_FLAG'][i],
-                                LOC_X: pythonData['LOC_X'][i],
-                                LOC_Y: pythonData['LOC_Y'][i]
-                              };
+        
+        game_shot_dict = {  game_id: pythonData['GAME_ID'][i],
+                            Shot_Made_Flag: pythonData['SHOT_MADE_FLAG'][i],
+                            LOC_X: pythonData['LOC_X'][i],
+                            LOC_Y: pythonData['LOC_Y'][i],
+                            game_date:pythonData['GAME_DATE'][i],
+                            home_team:pythonData['HTM'][i],
+                            away_team:pythonData['VTM'][i],
+                            shot_zone:pythonData['SHOT_ZONE_BASIC'][i],
+                            shot_range:pythonData['SHOT_ZONE_RANGE'][i],
+                            shot_action:pythonData['ACTION_TYPE'][i],
+                            event_type:pythonData['EVENT_TYPE'][i]
+                        };
        
           game_shot_list.push(game_shot_dict);
     }
       
     //converts the game_data into a unique list of games
-    let game_list = [...new Set(pythonData['GAME_ID'])]; 
-    
+    //https://stackoverflow.com/questions/1960473/get-all-unique-values-in-a-javascript-array-remove-duplicates
+    var game_list = [...new Set(pythonData['GAME_ID'])]; 
+    console.log('game list',game_list)
     //element for drop down box
-    var select = document.getElementById("example-select");
+    var game_drop_down = document.getElementById("game_picker");
     
     //creates drop down list
     for(i in game_list) {
-          select.options[select.options.length] = new Option(game_list[i],i);
+        game_drop_down.options[game_drop_down.options.length] = new Option(game_list[i],i);
     }
 
     // Select the submit button
@@ -41,8 +50,9 @@ d3.json(pythonUrl).then(function(data) {
 
       // grabs the text from the input selection and
       // filters the data the game entered in the form once button is clicked
-      var gameInput_value = d3.select("#example-select option:checked").text();
-      var filteredInput = game_shot_list.filter(game_shot_list => game_shot_list.game_id === gameInput_value);
+      var gameInput_value = d3.select("#game_picker option:checked").text();
+      var filteredInput = game_shot_list.filter(game_shot_list => 
+                                                game_shot_list.game_id === gameInput_value);
       
        //loops throug the filtered data to place in each array for assinging to html td's
       var game_output = []
@@ -120,21 +130,40 @@ d3.json(pythonUrl).then(function(data) {
                       'miss':missed_shots};
 
       console.log('shot_data',shot_data)
-      var selection = d3.select(".shots")
+      
+      var selection = d3.select(".fg")
                         .selectAll("div")
                         .data([shot_data])
                         .text(function(d){
-                                return 'shots made' + d['made'] + ' shots missed ' + d['miss'] + 
-                                ' [ % ' + d['made']/(d['miss']+d['made']) * 100 + ' ]' ;
+                                return 'FG: ' + d['made'] + '/' +
+                                        `${(d['miss']+d['made'])}` +
+                                        ' (% ' + Math.round(d['made']/(d['miss']+d['made'])*100) + ')';
                             });
       selection.enter()
             .append("div")
             .text(function(d){
-                    return 'shots made' + d['made'] + ' shots missed ' + d['miss'] + 
-                    ' [ % '+ d['made']/(d['miss']+d['made']) * 100 + ' ]' ;
+                    return 'FG: ' + d['made'] + '/' +
+                    `${(d['miss']+d['made'])}` +
+                    ' (% ' + Math.round(d['made']/(d['miss']+d['made'])*100) + ')' ;
                 });         
     
       selection.exit().remove();
+
+       
+      var game_table = d3.select(".shots")
+                        .selectAll("div")
+                        .data(game_output)
+                        .text(function(d){
+                                return d['shot_range'] + ' ' + d['event_type'];
+                            });
+      game_table.enter()
+                .append("div")
+                .text(function(d){
+                        return d['shot_range'] + ' ' + d['event_type'];
+                    });         
+    
+      game_table.exit().remove();
+
       
    });
 
